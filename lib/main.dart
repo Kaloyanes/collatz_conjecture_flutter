@@ -10,12 +10,13 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (!kIsWeb) {
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    if (Platform.isWindows || Platform.isMacOS) {
       await Window.initialize();
       await Window.setEffect(effect: WindowEffect.acrylic, dark: true);
-      setWindowMinSize(const Size(1100, 500));
-      setWindowTitle("Collatz Conjecture");
     }
+
+    setWindowMinSize(const Size(1100, 500));
+    setWindowTitle("Collatz Conjecture");
   }
 
   runApp(const MyApp());
@@ -27,9 +28,22 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb || Platform.isLinux) {
+      return FluentApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Collatz Conjecture',
+        theme: ThemeData(
+          scaffoldBackgroundColor: Colors.black,
+          activeColor: Colors.purple,
+          brightness: Brightness.dark,
+        ),
+        home: const HomePage(),
+      );
+    }
+
     return FluentApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'Collatz Conjecture',
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.transparent,
         activeColor: Colors.purple,

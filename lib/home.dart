@@ -1,8 +1,14 @@
+import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart' as mat;
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:screenshot/screenshot.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -12,8 +18,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  Uint8List? _imageFile = null;
   var nController = TextEditingController(text: "");
-  int intMaxValue = 100000000;
+  ScreenshotController screenshotController = ScreenshotController();
 
   var datas = <LineChartBarData>[];
   var doneNumbers = <int>[];
@@ -89,6 +96,30 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void screenshot() async {
+    // get how many files are in the directory
+    var dir = Directory("screenshots");
+    var files = dir.listSync();
+
+    var fileName = "screenshot ${files.length + 1}.png";
+
+    await screenshotController.captureAndSave(
+      "screenshots/",
+      fileName: fileName,
+      pixelRatio: 4,
+    );
+
+    // open in file explorer
+    if (Platform.isWindows) {
+      Process.runSync(
+        "explorer.exe",
+        [
+          "screenshots",
+        ],
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ScaffoldPage(
@@ -160,10 +191,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const Spacer(),
-            Text('Limit: $intMaxValue'),
-            const SizedBox(
-              width: 20,
-            ),
             Combobox<String>(
               onChanged: (value) {
                 setState(() {
@@ -184,51 +211,61 @@ class _HomePageState extends State<HomePage> {
                 });
               },
               child: const Text("Clear"),
+            ),
+            const SizedBox(
+              width: 10,
+            ),
+            Button(
+              onPressed: () => screenshot(),
+              child: const Text("Screenshot"),
             )
           ],
         ),
       ),
       content: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
-        child: LineChart(
-          LineChartData(
-            borderData: FlBorderData(
-              show: false,
+        child: Screenshot(
+          controller: screenshotController,
+          child: LineChart(
+            LineChartData(
+              borderData: FlBorderData(
+                show: false,
+              ),
+              titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(
+                  axisNameWidget: const Text("Steps"),
+                  sideTitles: SideTitles(
+                    reservedSize: 30,
+                    showTitles: false,
+                  ),
+                ),
+                leftTitles: AxisTitles(
+                  axisNameWidget: const Text("Value"),
+                  sideTitles: SideTitles(
+                    reservedSize: 30,
+                    showTitles: false,
+                  ),
+                ),
+                topTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: false,
+                  ),
+                ),
+                rightTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: false,
+                  ),
+                ),
+              ),
+              lineBarsData: datas,
+              gridData: FlGridData(
+                drawHorizontalLine: false,
+                drawVerticalLine: false,
+              ),
             ),
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                axisNameWidget: const Text("Steps"),
-                sideTitles: SideTitles(
-                  reservedSize: 30,
-                  showTitles: false,
-                ),
-              ),
-              leftTitles: AxisTitles(
-                axisNameWidget: const Text("Value"),
-                sideTitles: SideTitles(
-                  reservedSize: 30,
-                  showTitles: false,
-                ),
-              ),
-              topTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: false,
-                ),
-              ),
-              rightTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: false,
-                ),
-              ),
-            ),
-            lineBarsData: datas,
-            gridData: FlGridData(
-              drawHorizontalLine: false,
-              drawVerticalLine: false,
-            ),
+            swapAnimationCurve: Curves.easeInOutQuart,
+            swapAnimationDuration: const Duration(seconds: 1),
           ),
-          swapAnimationCurve: Curves.easeInOutQuart,
-          swapAnimationDuration: const Duration(seconds: 1),
         ),
       ),
     );
